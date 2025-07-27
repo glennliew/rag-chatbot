@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Hugging Face Spaces App Entry Point - Minimal Compatible Version
+Hugging Face Spaces App Entry Point
 """
 
 import os

@@ -28,7 +28,7 @@ class RAGChatbot:
                  model_name: str = "gpt-4-1106-preview",
                  temperature: float = 0.1,
                  max_tokens: int = 500,
-                 similarity_threshold: float = 0.5):
+                 similarity_threshold: float = 0.55): #tweaked to filter out more irrelevant questions
         """
         Initialize RAG Chatbot
         
@@ -80,7 +80,6 @@ IMPORTANT GUIDELINES:
 6. Always stay on topic and only use the provided context
 7. Keep answers concise but complete.
 8. Use friendly phrases like "Great question!" or "Let me help you with that!"
-10. Do not mention about the context provided.
 
 CONTEXT RELEVANCE:
 - Only answer questions if the provided context contains relevant information
@@ -98,7 +97,7 @@ Remember: You're helping young learners, so be patient, kind, and educational!""
 
 Question: {question}
 
-Please provide a helpful answer based on the context above. Remember to use simple language suitable for primary school students."""
+Please provide a helpful answer based on the context above but do not mention about the context provided. Remember to use simple language suitable for primary school students."""
         
         human_message = HumanMessagePromptTemplate.from_template(human_template)
         
@@ -169,19 +168,29 @@ Please provide a helpful answer based on the context above. Remember to use simp
         docs, avg_similarity = self.retrieve_context(question, k=3)
         return avg_similarity >= self.similarity_threshold
     
-    def generate_answer(self, question: str) -> Dict[str, Any]:
+    def generate_answer(self, question: str, user_language: str = 'en') -> Dict[str, Any]:
         """
         Generate answer for a question with context checking
         
         Args:
             question: User question
+            user_language: Detected language of the user
             
         Returns:
             Dictionary containing answer, context, and metadata
         """
         if not self.rag_chain:
+            # Language-specific "no KB" messages
+            no_kb_messages = {
+                'en': "I need a knowledge base to answer questions. Please load a PDF first!",
+                'zh': "我需要一个知识库来回答问题。请先加载一个PDF文件！",
+                'ms': "Saya memerlukan pangkalan pengetahuan untuk menjawab soalan. Sila muat naik fail PDF dahulu!",
+                'ta': "கேள்விகளுக்கு பதிலளிக்க எனக்கு அறிவுத் தளம் தேவை. முதலில் PDF கோப்பை ஏற்றவும்!",
+                'hi': "प्रश्नों का उत्तर देने के लिए मुझे एक ज्ञान आधार चाहिए। कृपया पहले एक PDF लोड करें!"
+            }
+            
             return {
-                "answer": "I need a knowledge base to answer questions. Please load a PDF first!",
+                "answer": no_kb_messages.get(user_language, no_kb_messages['en']),
                 "context": [],
                 "relevant": False,
                 "similarity_score": 0.0
@@ -191,8 +200,17 @@ Please provide a helpful answer based on the context above. Remember to use simp
         context_docs, similarity_score = self.retrieve_context(question)
         
         if similarity_score < self.similarity_threshold:
+            # Language-specific out-of-scope messages
+            out_of_scope_messages = {
+                'en': "I'm not sure how to answer that based on the information I have.",
+                'zh': "根据我掌握的信息，我不确定如何回答这个问题。",
+                'ms': "Saya tidak pasti bagaimana untuk menjawab itu berdasarkan maklumat yang saya ada.",
+                'ta': "என்னிடம் உள்ள தகவல்களின் அடிப்படையில் அதற்கு எவ்வாறு பதிலளிப்பது என்று எனக்குத் தெரியவில்லை. ",
+                'hi': "मेरे पास जो जानकारी है उसके आधार पर मुझे यकीन नहीं है कि इसका उत्तर कैसे दूं।"
+            }
+            
             return {
-                "answer": "I'm not sure how to answer that based on the information I have. Could you ask about something from the materials I've learned?",
+                "answer": out_of_scope_messages.get(user_language, out_of_scope_messages['en']),
                 "context": context_docs,
                 "relevant": False,
                 "similarity_score": similarity_score
@@ -210,8 +228,17 @@ Please provide a helpful answer based on the context above. Remember to use simp
             }
         
         except Exception as e:
+            # Language-specific error messages
+            error_messages = {
+                'en': f"Sorry, I had trouble generating an answer. Error: {str(e)}",
+                'zh': f"抱歉，我在生成答案时遇到了问题。错误：{str(e)}",
+                'ms': f"Maaf, saya menghadapi masalah untuk menghasilkan jawapan. Ralat: {str(e)}",
+                'ta': f"மன்னிக்கவும், பதில் உருவாக்குவதில் எனக்குச் சிக்கல் ஏற்பட்டது. பிழை: {str(e)}",
+                'hi': f"क्षमा करें, मुझे उत्तर बनाने में समस्या हुई। त्रुटि: {str(e)}"
+            }
+            
             return {
-                "answer": f"Sorry, I had trouble generating an answer. Error: {str(e)}",
+                "answer": error_messages.get(user_language, error_messages['en']),
                 "context": context_docs,
                 "relevant": False,
                 "similarity_score": similarity_score
@@ -282,25 +309,35 @@ class RAGPipelineManager:
             print("No existing database found!")
             return False
     
-    def ask_question(self, question: str) -> Dict[str, Any]:
+    def ask_question(self, question: str, user_language: str = 'en') -> Dict[str, Any]:
         """
         Ask a question to the chatbot
         
         Args:
             question: User question
+            user_language: Detected language of the user
             
         Returns:
             Response dictionary with answer and metadata
         """
         if not self.is_initialized:
+            # Language-specific initialization messages
+            init_messages = {
+                'en': "Please initialize the RAG pipeline first by loading a PDF!",
+                'zh': "请先加载PDF文件来初始化RAG管道！",
+                'ms': "Sila mulakan saluran RAG dahulu dengan memuatkan PDF!",
+                'ta': "முதலில் PDF ஐ ஏற்றி RAG பைப்லைனை துவக்கவும்!",
+                'hi': "कृपया पहले एक PDF लोड करके RAG पाइपलाइन को प्रारंभ करें!"
+            }
+            
             return {
-                "answer": "Please initialize the RAG pipeline first by loading a PDF!",
+                "answer": init_messages.get(user_language, init_messages['en']),
                 "context": [],
                 "relevant": False,
                 "similarity_score": 0.0
             }
         
-        return self.chatbot.generate_answer(question)
+        return self.chatbot.generate_answer(question, user_language)
     
     def simple_chat(self, question: str) -> str:
         """Simple chat interface"""

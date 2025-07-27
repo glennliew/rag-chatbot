@@ -17,7 +17,7 @@ class LanguageTranslator:
     def __init__(self):
         self.supported_languages = {
             'en': 'english',
-            'zh': 'chinese',
+            'zh': 'zh-CN',  # Use Chinese Simplified for Google Translator
             'ms': 'malay',
             'ta': 'tamil',
             'hi': 'hindi',
@@ -88,8 +88,12 @@ class LanguageTranslator:
                 if detected_lang == 'en':
                     return text
             
+            # Map internal language codes to Google Translator codes
+            source_code = self.supported_languages.get(source_lang, source_lang)
+            target_code = self.supported_languages.get(target_lang, target_lang)
+            
             # Perform translation
-            translator = GoogleTranslator(source=source_lang, target=target_lang)
+            translator = GoogleTranslator(source=source_code, target=target_code)
             translated = translator.translate(text)
             
             # Cache the result
@@ -190,28 +194,65 @@ class OutOfScopeDetector:
             True if greeting/general, False otherwise
         """
         greetings = [
+            # English greetings
             'hello', 'hi', 'hey', 'good morning', 'good afternoon', 'good evening',
-            'how are you', 'what\'s up', 'whats up', 'thank you', 'thanks', 'bye', 'goodbye'
+            'how are you', 'what\'s up', 'whats up', 'thank you', 'thanks', 'bye', 'goodbye',
+            # Chinese greetings
+            '你好', '您好', '早上好', '下午好', '晚上好', '谢谢', '再见',
+            # Malay greetings  
+            'hello', 'hai', 'selamat pagi', 'selamat petang', 'terima kasih', 'selamat tinggal',
+            # Tamil greetings
+            'வணக்கம்', 'நன்றி', 'போய் வருகிறேன்',
+            # Hindi greetings
+            'नमस्ते', 'धन्यवाद', 'अलविदा'
         ]
         
         question_lower = question.lower().strip()
         
         return any(greeting in question_lower for greeting in greetings)
     
-    def generate_helpful_response(self, question: str) -> str:
+    def generate_helpful_response(self, question: str, user_language: str = 'en') -> str:
         """
-        Generate a helpful response for out-of-scope questions
+        Generate a helpful response for out-of-scope questions in the user's language
         
         Args:
             question: User question
+            user_language: Detected language of the user
             
         Returns:
-            Helpful response string
+            Helpful response string in the appropriate language
         """
-        if self.is_greeting_or_general(question):
-            return "Hello! I'm here to help answer questions about the materials I've learned. What would you like to know?"
+        # Language-specific responses
+        responses = {
+            'en': {
+                'greeting': "Hello! I'm here to help answer questions about the materials I've learned. What would you like to know?",
+                'out_of_scope': "I'm not sure how to answer that based on the information I have."
+            },
+            'zh': {
+                'greeting': "你好！我在这里帮助回答关于我学过的材料的问题。你想知道什么呢？",
+                'out_of_scope': "根据我掌握的信息，我不确定如何回答这个问题。你能问一些关于我学过的材料的问题吗？"
+            },
+            'ms': {
+                'greeting': "Hello! Saya di sini untuk membantu menjawab soalan tentang bahan yang telah saya pelajari. Apa yang ingin anda tahu?",
+                'out_of_scope': "Saya tidak pasti bagaimana untuk menjawab itu berdasarkan maklumat yang saya ada. Bolehkah anda bertanya tentang sesuatu dari bahan yang telah saya pelajari?"
+            },
+            'ta': {
+                'greeting': "வணக்கம்! நான் கற்றுக்கொண்ட பொருட்களைப் பற்றிய கேள்விகளுக்கு பதிலளிக்க இங்கே இருக்கிறேன். நீங்கள் என்ன தெரிந்துகொள்ள விரும்புகிறீர்கள்?",
+                'out_of_scope': "என்னிடம் உள்ள தகவல்களின் அடிப்படையில் அதற்கு எவ்வாறு பதிலளிப்பது என்று எனக்குத் தெரியவில்லை. நான் கற்றுக்கொண்ட பொருட்களைப் பற்றி ஏதாவது கேட்க முடியுமா?"
+            },
+            'hi': {
+                'greeting': "नमस्ते! मैं यहाँ उन सामग्रियों के बारे में प्रश्नों के उत्तर देने के लिए हूँ जो मैंने सीखी हैं। आप क्या जानना चाहते हैं?",
+                'out_of_scope': "मेरे पास जो जानकारी है उसके आधार पर मुझे यकीन नहीं है कि इसका उत्तर कैसे दूं। क्या आप उन सामग्रियों से कुछ पूछ सकते हैं जो मैंने सीखी हैं?"
+            }
+        }
         
-        return "I'm not sure how to answer that based on the information I have. Could you ask about something from the materials I've learned?"
+        # Get responses for the language, default to English
+        lang_responses = responses.get(user_language, responses['en'])
+        
+        if self.is_greeting_or_general(question):
+            return lang_responses['greeting']
+        
+        return lang_responses['out_of_scope']
 
 
 class TextUtils:
@@ -315,7 +356,7 @@ class TextUtils:
 
 def create_friendly_response(original_response: str, user_language: str = 'en') -> str:
     """
-    Make response more friendly for primary school students
+    Make response more friendly for primary school students in their language
     
     Args:
         original_response: Original response text
@@ -324,19 +365,50 @@ def create_friendly_response(original_response: str, user_language: str = 'en') 
     Returns:
         Friendlier response
     """
-    # Add encouraging phrases
-    encouraging_starters = [
-        "Great question! ",
-        "That's a wonderful thing to ask about! ",
-        "I'm happy to help you learn about that! ",
-        "Let me explain that for you! "
-    ]
+    # Language-specific encouraging phrases
+    encouraging_starters = {
+        'en': [
+            "Great question! ",
+            "That's a wonderful thing to ask about! ",
+            "I'm happy to help you learn about that! ",
+            "Let me explain that for you! "
+        ],
+        'zh': [
+            "很好的问题！",
+            "这是一个很棒的问题！",
+            "我很高兴帮助你学习这个！",
+            "让我来为你解释一下！"
+        ],
+        'ms': [
+            "Soalan yang bagus! ",
+            "Itu perkara yang indah untuk ditanya! ",
+            "Saya gembira membantu anda belajar tentang itu! ",
+            "Biar saya terangkan untuk anda! "
+        ],
+        'ta': [
+            "அருமையான கேள்வி! ",
+            "கேட்க வேண்டிய அருமையான விஷயம்! ",
+            "இதைப் பற்றி உங்களுக்குக் கற்றுக்கொடுக்க நான் மகிழ்ச்சியடைகிறேன்! ",
+            "உங்களுக்கு இதை விளக்குகிறேன்! "
+        ],
+        'hi': [
+            "बहुत अच्छा सवाल! ",
+            "यह एक अद्भुत बात है जिसके बारे में पूछना! ",
+            "मुझे इसके बारे में आपकी मदद करने में खुशी हो रही है! ",
+            "मैं आपके लिए इसे समझाता हूं! "
+        ]
+    }
     
-    # Simple way to make responses friendlier
-    if not original_response.startswith(("Great", "That's", "I'm", "Hello", "Hi")):
+    # Get encouraging starters for the language, default to English
+    starters = encouraging_starters.get(user_language, encouraging_starters['en'])
+    
+    # Check if response already starts with friendly phrases in any language
+    friendly_starts = ["Great", "很好", "Soalan", "அருமை", "बहुत", "That's", "I'm", "Hello", "Hi"]
+    
+    if not any(original_response.startswith(start) for start in friendly_starts):
         import random
-        starter = random.choice(encouraging_starters)
-        original_response = starter + original_response
+        starter = random.choice(starters)
+        original_response = starter + " " + original_response
     
     return original_response
 
