@@ -1,10 +1,16 @@
 #!/usr/bin/env python3
 """
-Hugging Face Spaces App Entry Point - Minimal Compatible Version
+Hugging Face Spaces App Entry Point - Production Ready
+This file will be automatically run when your Space starts
 """
 
 import os
+import sys
 import gradio as gr
+from pathlib import Path
+
+# Set up environment for Hugging Face Spaces
+os.environ.setdefault('GRADIO_TEMP_DIR', '/tmp')
 
 def check_requirements():
     """Check if all requirements are met"""
@@ -59,7 +65,11 @@ def main():
     if not requirements_ok:
         print(message)
         interface = create_error_interface(message)
-        interface.launch()
+        interface.launch(
+            server_name="0.0.0.0",
+            server_port=7860,
+            share=False
+        )
         return
     
     # Import and create the main interface
@@ -70,13 +80,23 @@ def main():
         chatbot_interface = ChatbotInterface()
         interface = chatbot_interface.create_interface()
         
-        # Launch with minimal parameters for maximum compatibility
-        interface.launch()
+        # Launch the interface
+        interface.launch(
+            server_name="0.0.0.0",
+            server_port=7860,
+            share=False,
+            show_error=True,
+            show_tips=False
+        )
         
     except Exception as e:
         print(f"❌ Error initializing chatbot: {e}")
         error_interface = create_error_interface(f"❌ Error initializing chatbot: {str(e)}")
-        error_interface.launch()
+        error_interface.launch(
+            server_name="0.0.0.0",
+            server_port=7860,
+            share=False
+        )
 
 if __name__ == "__main__":
     main()

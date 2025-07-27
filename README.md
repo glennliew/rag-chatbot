@@ -1,3 +1,15 @@
+---
+title: Kids RAG Chatbot - Cells & Chemistry
+emoji: 🤖
+colorFrom: blue
+colorTo: green
+sdk: gradio
+sdk_version: "4.15.0"
+app_file: app.py
+pinned: false
+license: mit
+---
+
 # 🤖📚 RAG Chatbot for Kids
 
 A friendly AI chatbot that answers questions using Retrieval-Augmented Generation (RAG), specifically designed for primary school students (ages 8-12). The chatbot uses your PDF documents as a knowledge base and provides simple, educational answers.

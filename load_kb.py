@@ -37,7 +37,15 @@ class KnowledgeBaseLoader:
             length_function=len,
             separators=["\n\n", "\n", " ", ""]
         )
-        self.embeddings = OpenAIEmbeddings(model=embedding_model)
+        # Get API key from environment or fail gracefully
+        api_key = os.getenv("OPENAI_API_KEY")
+        if not api_key:
+            raise ValueError("OPENAI_API_KEY environment variable is required")
+        
+        self.embeddings = OpenAIEmbeddings(
+            model=embedding_model,
+            openai_api_key=api_key
+        )
         self.vector_store = None
     
     def load_pdf(self, pdf_path: str) -> List[Document]:

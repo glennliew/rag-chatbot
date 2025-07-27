@@ -42,11 +42,17 @@ class RAGChatbot:
         self.vector_store = vector_store
         self.similarity_threshold = similarity_threshold
         
+        # Get API key from environment or fail gracefully
+        api_key = os.getenv("OPENAI_API_KEY")
+        if not api_key:
+            raise ValueError("OPENAI_API_KEY environment variable is required")
+        
         # Initialize LLM
         self.llm = ChatOpenAI(
             model_name=model_name,
             temperature=temperature,
-            max_tokens=max_tokens
+            max_tokens=max_tokens,
+            openai_api_key=api_key
         )
         
         # Initialize retriever if vector store is provided
@@ -66,14 +72,15 @@ class RAGChatbot:
         return """You are a friendly and helpful AI assistant designed to answer questions for primary school students (ages 8-12). 
 
 IMPORTANT GUIDELINES:
-1. Use simple, clear language that children can understand
+1. Use simple, clear language that children can understand. 
 2. Be encouraging and positive in your tone
 3. Break down complex ideas into simple steps
 4. Use examples and analogies that kids can relate to
-5. If you don't have enough information in the context to answer properly, say: "I'm not sure how to answer that based on the information I have."
+5. If you don't have enough information in the context to answer properly, only say: "I'm not sure how to answer that based on the information I have."
 6. Always stay on topic and only use the provided context
-7. Keep answers concise but complete
+7. Keep answers concise but complete.
 8. Use friendly phrases like "Great question!" or "Let me help you with that!"
+10. Do not mention about the context provided.
 
 CONTEXT RELEVANCE:
 - Only answer questions if the provided context contains relevant information
