@@ -37,21 +37,17 @@ class ChatbotInterface:
         except Exception as e:
             print(f"Warning: Could not initialize from existing database: {e}")
         
-        # Then try sample PDF in current directory and /data
+        # Priority list for sample PDFs (for Hugging Face Spaces deployment)
         sample_pdf_paths = [
+            "sample_knowledge.pdf",  # Main sample for deployment
+            "data/sample_knowledge.pdf",  # Alternative location
             "sample_knowledge_base.pdf",
             "knowledge_base.pdf",
-            "docs.pdf",
-            "/data/sample_knowledge_base.pdf",
-            "/data/knowledge_base.pdf",
-            "/data/docs.pdf",
-            "./data/sample_knowledge_base.pdf",
-            "./data/knowledge_base.pdf",
-            "./data/docs.pdf"
+            "docs.pdf"
         ]
         
-        # Also scan /data and ./data directories for any PDF files
-        for data_dir in ["/data", "./data", "data"]:
+        # Also scan data directories for any PDF files (for local development)
+        for data_dir in ["./data", "data"]:
             if os.path.exists(data_dir):
                 try:
                     for file in os.listdir(data_dir):
@@ -60,15 +56,19 @@ class ChatbotInterface:
                 except PermissionError:
                     pass
         
+        # Try to initialize from any available PDF
         for pdf_path in sample_pdf_paths:
             if os.path.exists(pdf_path):
                 try:
+                    print(f"🚀 Initializing from: {pdf_path}")
                     self.pipeline_manager.initialize_from_pdf(pdf_path)
                     self.is_initialized = True
                     return
                 except Exception as e:
                     print(f"Failed to initialize from {pdf_path}: {e}")
                     continue
+        
+        print("⚠️ No PDF found for initialization. Please upload a PDF to get started.")
     
     def upload_pdf_and_initialize(self, pdf_file) -> str:
         """Handle PDF upload and initialize the RAG pipeline"""

@@ -42,6 +42,9 @@ chroma_db/
 # Data files (PDFs contain copyrighted content)
 data/
 *.pdf
+# But allow the sample PDF for deployment
+!sample_knowledge.pdf
+!data/sample_knowledge.pdf
 
 # IDE
 .vscode/
