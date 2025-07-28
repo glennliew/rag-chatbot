@@ -1,0 +1,86 @@
+{
+  "test_cases": [
+    {
+      "question": "What is a cell?",
+      "expected_answer": "A cell is the basic unit of life. It is the smallest structural and functional unit of living organisms.",
+      "contexts": ["Cells are the basic building blocks of all living organisms. They are the smallest units that can perform all the functions of life."],
+      "ground_truth": "A cell is the basic unit of life and the smallest structural and functional unit of living organisms."
+    },
+    {
+      "question": "What are the main parts of a plant cell?",
+      "expected_answer": "The main parts of a plant cell include the cell wall, cell membrane, nucleus, cytoplasm, chloroplasts, and vacuole.",
+      "contexts": ["Plant cells have several key components including a rigid cell wall, cell membrane, nucleus that controls the cell, cytoplasm where chemical reactions occur, chloroplasts for photosynthesis, and a large vacuole for storage."],
+      "ground_truth": "Plant cells contain a cell wall, cell membrane, nucleus, cytoplasm, chloroplasts, and vacuole as their main parts."
+    },
+    {
+      "question": "What is photosynthesis?",
+      "expected_answer": "Photosynthesis is the process by which plants make their own food using sunlight, water, and carbon dioxide, producing glucose and oxygen.",
+      "contexts": ["Photosynthesis is a vital process where plants convert light energy from the sun, along with water and carbon dioxide, into glucose (sugar) and oxygen. This process occurs mainly in the chloroplasts of plant cells."],
+      "ground_truth": "Photosynthesis is the process plants use to make food from sunlight, water, and carbon dioxide, producing glucose and oxygen."
+    },
+    {
+      "question": "What is the difference between plant and animal cells?",
+      "expected_answer": "Plant cells have a cell wall, chloroplasts, and large vacuoles, while animal cells do not. Animal cells may have small vacuoles but no cell wall or chloroplasts.",
+      "contexts": ["The main differences between plant and animal cells include: plant cells have a rigid cell wall for protection and support, chloroplasts for photosynthesis, and large central vacuoles for storage. Animal cells lack these structures but may have small vacuoles and centrioles."],
+      "ground_truth": "Plant cells have cell walls, chloroplasts, and large vacuoles that animal cells lack. Animal cells are more flexible without cell walls."
+    },
+    {
+      "question": "What is the function of the nucleus in a cell?",
+      "expected_answer": "The nucleus controls all the activities of the cell and contains the genetic material (DNA) that determines the cell's characteristics.",
+      "contexts": ["The nucleus is often called the control center of the cell. It contains the cell's DNA and controls all cellular activities including growth, metabolism, and reproduction."],
+      "ground_truth": "The nucleus is the control center of the cell that contains DNA and regulates all cellular activities."
+    },
+    {
+      "question": "What do chloroplasts do in plant cells?",
+      "expected_answer": "Chloroplasts are the organelles where photosynthesis takes place. They contain chlorophyll which captures sunlight to make food for the plant.",
+      "contexts": ["Chloroplasts are specialized organelles found only in plant cells. They contain a green pigment called chlorophyll that captures light energy from the sun to carry out photosynthesis, converting carbon dioxide and water into glucose."],
+      "ground_truth": "Chloroplasts are organelles that conduct photosynthesis using chlorophyll to capture sunlight and make food for plants."
+    },
+    {
+      "question": "What is cellular respiration?",
+      "expected_answer": "Cellular respiration is the process by which cells break down glucose to release energy that can be used by the organism.",
+      "contexts": ["Cellular respiration is a metabolic process where cells break down glucose molecules in the presence of oxygen to produce energy (ATP), carbon dioxide, and water. This process occurs in the mitochondria of cells."],
+      "ground_truth": "Cellular respiration is the process cells use to break down glucose and release energy for cellular activities."
+    },
+    {
+      "question": "What are tissues in biology?",
+      "expected_answer": "Tissues are groups of similar cells that work together to perform a specific function in an organism.",
+      "contexts": ["In biology, tissues are collections of cells that are similar in structure and function. Different types of tissues include muscle tissue, nerve tissue, connective tissue, and epithelial tissue."],
+      "ground_truth": "Tissues are groups of similar cells that work together to perform specific functions in living organisms."
+    },
+    {
+      "question": "What is the cell membrane and what does it do?",
+      "expected_answer": "The cell membrane is a flexible barrier that surrounds the cell and controls what enters and leaves the cell.",
+      "contexts": ["The cell membrane, also called the plasma membrane, is a thin, flexible barrier that surrounds all cells. It controls the passage of substances in and out of the cell, maintaining the cell's internal environment."],
+      "ground_truth": "The cell membrane is a flexible barrier that controls what substances can enter and exit the cell."
+    },
+    {
+      "question": "Why are cells important to living things?",
+      "expected_answer": "Cells are important because they are the basic units of life that carry out all the functions necessary for organisms to survive, grow, and reproduce.",
+      "contexts": ["Cells are fundamental to life because they perform all the essential functions needed for survival including metabolism, growth, response to environment, and reproduction. All living things are made of one or more cells."],
+      "ground_truth": "Cells are important because they are the basic units of life that perform all essential functions for survival and reproduction."
+    }
+  ],
+  "evaluation_metrics": {
+    "target_scores": {
+      "faithfulness": 0.8,
+      "answer_relevancy": 0.8,
+      "context_precision": 0.8,
+      "context_recall": 0.8
+    }
+  },
+  "languages": {
+    "multilingual_test_cases": [
+      {
+        "question_en": "What is a cell?",
+        "question_zh": "什么是细胞？",
+        "question_ms": "Apakah sel?"
+      },
+      {
+        "question_en": "What is photosynthesis?",
+        "question_zh": "什么是光合作用？", 
+        "question_ms": "Apakah fotosintesis?"
+      }
+    ]
+  }
+} 

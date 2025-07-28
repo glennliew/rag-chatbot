@@ -189,7 +189,26 @@ class RAGEvaluator:
                 metrics=self.metrics
             )
             
-            return result
+            # Convert EvaluationResult to dictionary
+            scores = {}
+            try:
+                # Get scores from pandas DataFrame
+                df = result.to_pandas()
+                # Extract mean scores for each metric
+                for metric in self.metrics:
+                    if metric.name in df.columns:
+                        scores[metric.name] = df[metric.name].mean()
+                
+                print(f"✅ Evaluation completed successfully!")
+                print("📊 Raw scores extracted:")
+                for metric, score in scores.items():
+                    print(f"  {metric}: {score:.3f}")
+                
+            except Exception as e:
+                print(f"❌ Could not extract scores: {str(e)}")
+                return {}
+            
+            return scores
             
         except Exception as e:
             print(f"❌ Evaluation failed: {str(e)}")

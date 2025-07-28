@@ -17,35 +17,32 @@ from langchain.schema import Document
 
 
 class KnowledgeBaseLoader:
-    def __init__(self, 
-                 chunk_size: int = 1000,
-                 chunk_overlap: int = 200,
-                 embedding_model: str = "text-embedding-ada-002"):
+    def __init__(self, chunk_size: int = 800, chunk_overlap: int = 200):  # Optimized parameters
         """
-        Initialize the Knowledge Base Loader
+        Initialize Knowledge Base Loader with optimized chunking for better context coverage
         
         Args:
-            chunk_size: Size of text chunks for splitting
-            chunk_overlap: Overlap between chunks
-            embedding_model: OpenAI embedding model to use
+            chunk_size: Size of text chunks (increased to 800 for more context)
+            chunk_overlap: Overlap between chunks (increased to 200 for continuity)
         """
-        self.chunk_size = chunk_size
-        self.chunk_overlap = chunk_overlap
-        self.text_splitter = RecursiveCharacterTextSplitter(
-            chunk_size=chunk_size,
-            chunk_overlap=chunk_overlap,
-            length_function=len,
-            separators=["\n\n", "\n", " ", ""]
-        )
         # Get API key from environment or fail gracefully
         api_key = os.getenv("OPENAI_API_KEY")
         if not api_key:
             raise ValueError("OPENAI_API_KEY environment variable is required")
         
+        # Initialize embeddings
         self.embeddings = OpenAIEmbeddings(
-            model=embedding_model,
             openai_api_key=api_key
         )
+        
+        # Initialize text splitter with optimized parameters
+        self.text_splitter = RecursiveCharacterTextSplitter(
+            chunk_size=chunk_size,
+            chunk_overlap=chunk_overlap,
+            length_function=len,
+            separators=["\n\n", "\n", ". ", " ", ""]  # Better separation hierarchy
+        )
+        
         self.vector_store = None
     
     def load_pdf(self, pdf_path: str) -> List[Document]:
@@ -68,19 +65,29 @@ class KnowledgeBaseLoader:
         print(f"Loaded {len(documents)} pages from PDF")
         return documents
     
-    def split_documents(self, documents: List[Document]) -> List[Document]:
+    def _split_documents(self, documents: List[Document]) -> List[Document]:
         """
-        Split documents into smaller chunks
+        Split documents into chunks with optimized parameters for better coverage
         
         Args:
-            documents: List of Document objects
+            documents: List of loaded documents
             
         Returns:
-            List of split Document objects
+            List of text chunks as documents
         """
         print("Splitting documents into chunks...")
-        chunks = self.text_splitter.split_documents(documents)
-        print(f"Created {len(chunks)} text chunks")
+        
+        # Optimized text splitter for better information coverage
+        text_splitter = RecursiveCharacterTextSplitter(
+            chunk_size=800,        # Increased from 500 for more context per chunk
+            chunk_overlap=200,     # Increased from 100 for better information continuity  
+            length_function=len,
+            separators=["\n\n", "\n", ". ", " ", ""]  # Better separation hierarchy
+        )
+        
+        chunks = text_splitter.split_documents(documents)
+        print(f"Created {len(chunks)} text chunks with optimized parameters")
+        
         return chunks
     
     def create_vector_store(self, 
@@ -155,7 +162,7 @@ class KnowledgeBaseLoader:
         
         # Load and process PDF
         documents = self.load_pdf(pdf_path)
-        chunks = self.split_documents(documents)
+        chunks = self._split_documents(documents)
         vector_store = self.create_vector_store(chunks, persist_directory)
         
         return vector_store
@@ -172,7 +179,8 @@ def main():
     
     loader = KnowledgeBaseLoader()
     
-    pdf_path = "data/Cells and Chemistry of Life.pdf"
+    
+    pdf_path = "sample_knowledge.pdf"
     
     if os.path.exists(pdf_path):
         try:

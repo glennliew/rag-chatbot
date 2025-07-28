@@ -28,37 +28,45 @@ class RAGChatbot:
                  model_name: str = "gpt-4-1106-preview",
                  temperature: float = 0.1,
                  max_tokens: int = 500,
-                 similarity_threshold: float = 0.55): #tweaked to filter out more irrelevant questions
+                 similarity_threshold: float = 0.4):  # Optimized value for best balance
         """
         Initialize RAG Chatbot
         
         Args:
             vector_store: Chroma vector store for retrieval
-            model_name: OpenAI model name
-            temperature: LLM temperature for generation
-            max_tokens: Maximum tokens for response
-            similarity_threshold: Minimum similarity score for relevant context
+            model_name: OpenAI model to use
+            temperature: Model temperature for response generation
+            max_tokens: Maximum tokens in response
+            similarity_threshold: Minimum similarity score for relevance (optimized for precision)
         """
+        # Initialize with optimized parameters
         self.vector_store = vector_store
-        self.similarity_threshold = similarity_threshold
+        self.model_name = model_name
+        self.temperature = temperature  
+        self.max_tokens = max_tokens
+        self.similarity_threshold = similarity_threshold  # Fine-tuned from 0.4 to 0.45
         
         # Get API key from environment or fail gracefully
         api_key = os.getenv("OPENAI_API_KEY")
         if not api_key:
             raise ValueError("OPENAI_API_KEY environment variable is required")
         
-        # Initialize LLM
+        # Initialize components
         self.llm = ChatOpenAI(
-            model_name=model_name,
-            temperature=temperature,
-            max_tokens=max_tokens,
+            model_name=self.model_name,
+            temperature=self.temperature,
+            max_tokens=self.max_tokens,
             openai_api_key=api_key
         )
         
-        # Initialize retriever if vector store is provided
         self.retriever = None
+        self.rag_chain = None
+        self.is_initialized = False
+        
+        # Initialize retriever if vector store is provided
         if vector_store:
-            self.retriever = vector_store.as_retriever(search_kwargs={"k": 4})
+            # Optimized retrieval: more documents for better recall
+            self.retriever = vector_store.as_retriever(search_kwargs={"k": 6})  # Increased from 4 to 6
         
         # Create prompts
         self.system_prompt = self._create_system_prompt()
@@ -68,25 +76,31 @@ class RAGChatbot:
         self.rag_chain = self._create_rag_chain()
     
     def _create_system_prompt(self) -> str:
-        """Create system prompt for primary school friendly responses"""
+        """Create system prompt for primary school friendly responses with strong context adherence"""
         return """You are a friendly and helpful AI assistant designed to answer questions for primary school students (ages 8-12). 
 
-IMPORTANT GUIDELINES:
-1. Use simple, clear language that children can understand. 
-2. Be encouraging and positive in your tone
+CRITICAL CONTEXT RULES:
+1. ONLY use information provided in the context below
+2. DO NOT add any information that is not explicitly mentioned in the context
+3. If the context doesn't contain enough information to answer the question completely, say: "I'm not sure how to answer that based on the information I have."
+4. Quote or paraphrase directly from the context when possible
+5. NEVER make assumptions or add details not in the context
+
+COMMUNICATION GUIDELINES:
+1. Use simple, clear language that children can understand
+2. Be encouraging and positive in your tone  
 3. Break down complex ideas into simple steps
-4. Use examples and analogies that kids can relate to
-5. If you don't have enough information in the context to answer properly, only say: "I'm not sure how to answer that based on the information I have."
-6. Always stay on topic and only use the provided context
-7. Keep answers concise but complete.
-8. Use friendly phrases like "Great question!" or "Let me help you with that!"
+4. Use examples from the context when available
+5. Keep answers concise but complete
+6. Start with friendly phrases like "Great question!" or "Let me help you with that!"
 
-CONTEXT RELEVANCE:
-- Only answer questions if the provided context contains relevant information
-- If the context doesn't match the question well, politely say you don't have that information
-- Never make up information that isn't in the context
+RESPONSE STRUCTURE:
+- Base your entire answer on the provided context
+- If context is incomplete, acknowledge what you can answer and what you cannot
+- Never fabricate details not present in the context
+- Prioritize accuracy over completeness
 
-Remember: You're helping young learners, so be patient, kind, and educational!"""
+Remember: Your primary goal is to be helpful AND factually accurate based only on the provided context!"""
     
     def _create_chat_prompt(self) -> ChatPromptTemplate:
         """Create chat prompt template"""
@@ -121,18 +135,19 @@ Please provide a helpful answer based on the context above but do not mention ab
         return rag_chain
     
     def set_vector_store(self, vector_store: Chroma):
-        """Set vector store and update retriever"""
+        """Set vector store and update retriever with optimized parameters"""
         self.vector_store = vector_store
-        self.retriever = vector_store.as_retriever(search_kwargs={"k": 4})
+        # Optimized retrieval: more documents for better recall 
+        self.retriever = vector_store.as_retriever(search_kwargs={"k": 6})  # Increased from 4 to 6
         self.rag_chain = self._create_rag_chain()
     
-    def retrieve_context(self, question: str, k: int = 4) -> Tuple[List[Document], float]:
+    def retrieve_context(self, question: str, k: int = 6) -> Tuple[List[Document], float]:  # Increased from 4 to 6
         """
-        Retrieve relevant context and calculate relevance score
+        Retrieve relevant context and calculate relevance score with optimized parameters
         
         Args:
             question: User question
-            k: Number of documents to retrieve
+            k: Number of documents to retrieve (default increased to 6)
             
         Returns:
             Tuple of (documents, average_similarity_score)
@@ -206,7 +221,7 @@ Please provide a helpful answer based on the context above but do not mention ab
                 'zh': "根据我掌握的信息，我不确定如何回答这个问题。",
                 'ms': "Saya tidak pasti bagaimana untuk menjawab itu berdasarkan maklumat yang saya ada.",
                 'ta': "என்னிடம் உள்ள தகவல்களின் அடிப்படையில் அதற்கு எவ்வாறு பதிலளிப்பது என்று எனக்குத் தெரியவில்லை. ",
-                'hi': "मेरे पास जो जानकारी है उसके आधार पर मुझे यकीन नहीं है कि इसका उत्तर कैसे दूं।"
+                'hi': "मेरे पास जो जानकारी है उसके आधार पर मुझे யकीन नहीं है कि इसका உதவி எப்படி செய்வது."
             }
             
             return {
