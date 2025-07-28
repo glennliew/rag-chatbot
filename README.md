@@ -61,6 +61,7 @@ cp .env.example .env
 ### 2. Prepare Your Knowledge Base
 
 Place a PDF document in the project directory. You can name it:
+
 - `sample_knowledge_base.pdf`
 - `knowledge_base.pdf`
 - `docs.pdf`
@@ -107,15 +108,18 @@ python app.py --test
 Once the interface is running, you can ask questions like:
 
 **English:**
+
 - "What is photosynthesis?"
 - "How do plants get water?"
 - "Why are leaves green?"
 
 **Chinese:**
+
 - "什么是光合作用？"
 - "植物如何获得水分？"
 
 **Malay:**
+
 - "Apakah fotosintesis?"
 - "Bagaimana tumbuhan mendapat air?"
 
@@ -139,12 +143,12 @@ python app.py --test
 
 The chatbot is evaluated using **RAGAS** (Retrieval-Augmented Generation Assessment) with four key metrics:
 
-| Metric | Target Score | Description |
-|--------|--------------|-------------|
-| **Faithfulness** | ≥80% | Answers stick to the provided context |
-| **Answer Relevancy** | ≥80% | Answers directly address the questions |
-| **Context Precision** | ≥80% | Retrieved context is relevant to the question |
-| **Context Recall** | ≥80% | All relevant information is retrieved |
+| Metric                | Target Score | Description                                   |
+| --------------------- | ------------ | --------------------------------------------- |
+| **Faithfulness**      | ≥80%         | Answers stick to the provided context         |
+| **Answer Relevancy**  | ≥80%         | Answers directly address the questions        |
+| **Context Precision** | ≥80%         | Retrieved context is relevant to the question |
+| **Context Recall**    | ≥80%         | All relevant information is retrieved         |
 
 ### Sample Evaluation Output
 
@@ -202,6 +206,7 @@ KnowledgeBaseLoader(
 ### Multilingual Support
 
 The chatbot automatically detects input language and can respond in:
+
 - English
 - Chinese (Simplified)
 - Malay
@@ -216,6 +221,7 @@ The chatbot automatically detects input language and can respond in:
 ### Out-of-Scope Detection
 
 The system intelligently detects and handles:
+
 - Time-sensitive questions ("What's the weather today?")
 - Personal questions ("Tell me about myself")
 - Math calculations ("What's 2+2?")
@@ -234,21 +240,25 @@ The system intelligently detects and handles:
 ### Common Issues
 
 **1. "No knowledge base found"**
+
 ```bash
 solution: python app.py --setup your_document.pdf
 ```
 
 **2. "OpenAI API key not found"**
+
 ```bash
 solution: Add OPENAI_API_KEY to your .env file
 ```
 
 **3. "RAGAS evaluation failed"**
+
 ```bash
 solution: Ensure you have a stable internet connection and valid API key
 ```
 
 **4. "Import errors"**
+
 ```bash
 solution: pip install -r requirements.txt
 ```
@@ -279,6 +289,7 @@ The project includes comprehensive test cases in `test_data.json`:
 - Ground truth answers for evaluation
 
 Topics covered:
+
 - Photosynthesis
 - Plant biology
 - Water cycle
@@ -291,24 +302,28 @@ Topics covered:
 ## 🚀 Deployment Options
 
 ### Local Development
+
 ```bash
 python app.py --chat gradio
 # Access at http://127.0.0.1:7860
 ```
 
 ### HuggingFace Spaces
+
 1. Create a new Space on HuggingFace
 2. Upload all project files
 3. Set `OPENAI_API_KEY` in Space settings
 4. The app will auto-deploy
 
 ### Streamlit Cloud
+
 1. Push to GitHub repository
 2. Connect to Streamlit Cloud
 3. Add secrets for API keys
 4. Deploy with `streamlit run app.py -- --mode streamlit`
 
 ### Docker Deployment
+
 ```dockerfile
 FROM python:3.9-slim
 WORKDIR /app
@@ -329,12 +344,6 @@ We welcome contributions! Here's how to help:
 4. Push to branch (`git push origin feature/amazing-feature`)
 5. Open a Pull Request
 
-### Development Guidelines
-
-- Follow PEP 8 style guidelines
-- Add tests for new features
-- Update documentation as needed
-- Ensure RAGAS scores remain above 80%
 
 ## 📄 License
 

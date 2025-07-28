@@ -91,16 +91,15 @@ class ChatbotInterface:
         except Exception as e:
             return f"🔴 Error loading PDF: {str(e)}"
     
-    def process_message(self, message: str, history: List[dict]) -> Tuple[str, List[dict]]:
-        """Process user message and return response using new messages format"""
+    def process_message(self, message: str, history: List[List[str]]) -> Tuple[str, List[List[str]]]:
+        """Process user message and return response using tuple format for compatibility"""
         if not message.strip():
             return "", history
         
         # Check if system is initialized
         if not self.is_initialized:
             bot_response = "🤖 Hi there! I need you to upload a PDF document first so I can learn and help answer your questions!"
-            history.append({"role": "user", "content": message})
-            history.append({"role": "assistant", "content": bot_response})
+            history.append([message, bot_response])
             return "", history
         
         try:
@@ -110,15 +109,13 @@ class ChatbotInterface:
             # Handle greetings and out-of-scope questions with language-aware responses
             if self.out_of_scope_detector.is_greeting_or_general(message):
                 bot_response = self.out_of_scope_detector.generate_helpful_response(message, detected_lang)
-                history.append({"role": "user", "content": message})
-                history.append({"role": "assistant", "content": bot_response})
+                history.append([message, bot_response])
                 return "", history
             
             # Check for obvious out-of-scope patterns
             if self.out_of_scope_detector.is_out_of_scope_by_patterns(message):
                 bot_response = self.out_of_scope_detector.generate_helpful_response(message, detected_lang)
-                history.append({"role": "user", "content": message})
-                history.append({"role": "assistant", "content": bot_response})
+                history.append([message, bot_response])
                 return "", history
             
             # Get response from RAG pipeline with language context
@@ -139,8 +136,7 @@ class ChatbotInterface:
                 debug_info = f" (Similarity: {result['similarity_score']:.2f})"
                 friendly_response += debug_info
             
-            history.append({"role": "user", "content": message})
-            history.append({"role": "assistant", "content": friendly_response})
+            history.append([message, friendly_response])
             
         except Exception as e:
             # Language-specific error messages
@@ -155,12 +151,11 @@ class ChatbotInterface:
             # Detect language for error message
             detected_lang, _ = self.translator.translate_to_english(message)
             error_response = error_messages.get(detected_lang, error_messages['en'])
-            history.append({"role": "user", "content": message})
-            history.append({"role": "assistant", "content": error_response})
+            history.append([message, error_response])
         
         return "", history
     
-    def clear_chat(self) -> List[dict]:
+    def clear_chat(self) -> List[List[str]]:
         """Clear chat history"""
         return []
     
@@ -174,7 +169,6 @@ class ChatbotInterface:
     def create_interface(self) -> gr.Blocks:
         """Create the enhanced professional Gradio interface for primary school students"""
         
-        # Professional dark CSS matching the Higgs Audio interface style
         custom_css = """
         /* Global Styles - Dark Theme */
         .gradio-container {
@@ -235,7 +229,6 @@ class ChatbotInterface:
             color: #ffffff !important;
         }
         
-        /* Green Button Styles - Matching Higgs Interface */
         .btn {
             border-radius: 8px !important;
             font-weight: 500 !important;
@@ -290,25 +283,71 @@ class ChatbotInterface:
             color: #999999 !important;
         }
         
-        /* File Upload Area - Enhanced */
-        .file-upload, .upload, input[type="file"] {
+        /* File Upload Area */
+        .file-upload, .upload, input[type="file"], .file-component {
             border: 2px dashed #606060 !important;
             border-radius: 12px !important;
             background: #363636 !important;
-            padding: 30px !important;
+            padding: 40px 20px !important;
             text-align: center !important;
             transition: all 0.2s ease !important;
             color: #ffffff !important;
-            min-height: 120px !important;
+            min-height: 140px !important;
             display: flex !important;
             flex-direction: column !important;
             justify-content: center !important;
             align-items: center !important;
+            position: relative !important;
         }
         
-        .file-upload:hover, .upload:hover {
+        .file-upload:hover, .upload:hover, .file-component:hover {
             background: #404040 !important;
             border-color: #00d46a !important;
+        }
+        
+        /* Hide default file input styling */
+        .file-component input[type="file"] {
+            opacity: 0 !important;
+            position: absolute !important;
+            width: 100% !important;
+            height: 100% !important;
+            cursor: pointer !important;
+        }
+        
+        /* Custom upload text overlay */
+        .file-component::before {
+            content: "Drop File Here\\A- or -\\AClick to Upload" !important;
+            white-space: pre !important;
+            color: #cccccc !important;
+            font-size: 18px !important;
+            font-weight: 500 !important;
+            line-height: 1.4 !important;
+            pointer-events: none !important;
+            position: absolute !important;
+            top: 50% !important;
+            left: 50% !important;
+            transform: translate(-50%, -50%) !important;
+        }
+        
+        /* Hide the default gradio file component text */
+        .file-component .file-preview,
+        .file-component .upload-text,
+        .file-component label {
+            display: none !important;
+        }
+        
+        /* Upload button styling when file selected */
+        .file-component button {
+            background: #00d46a !important;
+            color: white !important;
+            border: none !important;
+            border-radius: 8px !important;
+            padding: 8px 16px !important;
+            font-size: 12px !important;
+            font-weight: 500 !important;
+            margin-top: 10px !important;
+            z-index: 10 !important;
+            position: relative !important;
         }
         
         /* Upload button styling */
@@ -526,9 +565,7 @@ class ChatbotInterface:
                     chatbot = gr.Chatbot(
                         height=450,
                         label="",
-                        show_label=False,
-                        avatar_images=("👦", "🤖"),
-                        type="messages"
+                        show_label=False
                     )
                     
                     # Input Area
@@ -562,23 +599,11 @@ class ChatbotInterface:
                     # Upload Section
                     gr.HTML('<h2>📚 Upload Your Learning Material</h2>')
                     
-                    # Custom upload area
-                    gr.HTML("""
-                    <div style="margin-bottom: 16px;">
-                        <div style="background: #5865f2; color: white; border: none; border-radius: 8px; 
-                                   padding: 12px 24px; font-size: 14px; font-weight: 500; 
-                                   display: inline-block; margin-bottom: 0px;">
-                            📄 Choose your PDF document
-                        </div>
-                    </div>
-                    """)
-                    
                     pdf_upload = gr.File(
                         file_types=[".pdf"],
                         label="",
                         show_label=False,
                         file_count="single",
-                        height=100,
                         elem_classes=["file-component"]
                     )
                     

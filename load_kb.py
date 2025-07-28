@@ -169,11 +169,10 @@ def main():
     """
     Main function for testing the knowledge base loader
     """
-    # Example usage
+    
     loader = KnowledgeBaseLoader()
     
-    # Replace with your PDF path
-    pdf_path = "sample_knowledge_base.pdf"
+    pdf_path = "data/Cells and Chemistry of Life.pdf"
     
     if os.path.exists(pdf_path):
         try:
