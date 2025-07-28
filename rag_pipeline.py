@@ -28,7 +28,7 @@ class RAGChatbot:
                  model_name: str = "gpt-4-1106-preview",
                  temperature: float = 0.1,
                  max_tokens: int = 500,
-                 similarity_threshold: float = 0.4):  # Optimized value for best balance
+                 similarity_threshold: float = 0.47):  # Fine-tuned for optimal balance
         """
         Initialize RAG Chatbot
         
@@ -37,14 +37,14 @@ class RAGChatbot:
             model_name: OpenAI model to use
             temperature: Model temperature for response generation
             max_tokens: Maximum tokens in response
-            similarity_threshold: Minimum similarity score for relevance (optimized for precision)
+            similarity_threshold: Minimum similarity score for relevance (tuned for precision)
         """
         # Initialize with optimized parameters
         self.vector_store = vector_store
         self.model_name = model_name
         self.temperature = temperature  
         self.max_tokens = max_tokens
-        self.similarity_threshold = similarity_threshold  # Fine-tuned from 0.4 to 0.45
+        self.similarity_threshold = similarity_threshold  # Increased from 0.4 to 0.5 for precision
         
         # Get API key from environment or fail gracefully
         api_key = os.getenv("OPENAI_API_KEY")
@@ -76,31 +76,32 @@ class RAGChatbot:
         self.rag_chain = self._create_rag_chain()
     
     def _create_system_prompt(self) -> str:
-        """Create system prompt for primary school friendly responses with strong context adherence"""
+        """Create system prompt with maximum context adherence for optimal faithfulness"""
         return """You are a friendly and helpful AI assistant designed to answer questions for primary school students (ages 8-12). 
 
-CRITICAL CONTEXT RULES:
-1. ONLY use information provided in the context below
-2. DO NOT add any information that is not explicitly mentioned in the context
-3. If the context doesn't contain enough information to answer the question completely, say: "I'm not sure how to answer that based on the information I have."
-4. Quote or paraphrase directly from the context when possible
-5. NEVER make assumptions or add details not in the context
+ABSOLUTE CONTEXT ADHERENCE RULES:
+1. ONLY use information that is EXPLICITLY stated in the provided context
+2. NEVER add any information, details, or explanations not directly found in the context
+3. If the context doesn't contain enough information to fully answer the question, say: "Based on the information I have, [answer what you can from context], but I don't have enough details to tell you more."
+4. Quote or directly paraphrase from the context whenever possible
+5. Do NOT make logical inferences that go beyond what is explicitly stated
+6. Do NOT provide general knowledge that isn't in the context
+7. Use analogies and examples from the context when it helps in understanding the explanation
 
 COMMUNICATION GUIDELINES:
-1. Use simple, clear language that children can understand
-2. Be encouraging and positive in your tone  
-3. Break down complex ideas into simple steps
-4. Use examples from the context when available
-5. Keep answers concise but complete
-6. Start with friendly phrases like "Great question!" or "Let me help you with that!"
+1. Use simple, clear language appropriate for ages 8-12
+2. Be encouraging and positive: "Great question!" or "Let me help you with that!"
+3. Break information into simple, easy-to-understand parts
+4. If context is limited, acknowledge what you can answer and what you cannot
+5. Keep answers focused and concise
 
-RESPONSE STRUCTURE:
-- Base your entire answer on the provided context
-- If context is incomplete, acknowledge what you can answer and what you cannot
-- Never fabricate details not present in the context
-- Prioritize accuracy over completeness
+RESPONSE STRATEGY:
+- Base EVERY word of your answer on the provided context
+- If context is incomplete for a full answer, provide partial information and acknowledge limitations
+- Never add details not explicitly mentioned in the context
+- Prioritize being accurate over being comprehensive
 
-Remember: Your primary goal is to be helpful AND factually accurate based only on the provided context!"""
+Remember: It's better to give a limited but accurate answer than to add information not in the context!"""
     
     def _create_chat_prompt(self) -> ChatPromptTemplate:
         """Create chat prompt template"""
@@ -141,13 +142,13 @@ Please provide a helpful answer based on the context above but do not mention ab
         self.retriever = vector_store.as_retriever(search_kwargs={"k": 6})  # Increased from 4 to 6
         self.rag_chain = self._create_rag_chain()
     
-    def retrieve_context(self, question: str, k: int = 6) -> Tuple[List[Document], float]:  # Increased from 4 to 6
+    def retrieve_context(self, question: str, k: int = 5) -> Tuple[List[Document], float]:  # Increased k for faithfulness
         """
-        Retrieve relevant context and calculate relevance score with optimized parameters
+        Retrieve context with balanced keyword-aware precision optimization
         
         Args:
             question: User question
-            k: Number of documents to retrieve (default increased to 6)
+            k: Number of documents to retrieve (balanced for precision and faithfulness)
             
         Returns:
             Tuple of (documents, average_similarity_score)
@@ -155,18 +156,79 @@ Please provide a helpful answer based on the context above but do not mention ab
         if not self.vector_store:
             return [], 0.0
         
-        # Get documents with similarity scores
-        docs_with_scores = self.vector_store.similarity_search_with_score(question, k=k)
+        # Get more candidates for intelligent selection
+        initial_k = min(k + 3, 10)
+        docs_with_scores = self.vector_store.similarity_search_with_score(question, k=initial_k)
         
         if not docs_with_scores:
             return [], 0.0
         
-        # Extract documents and calculate average similarity
-        documents = [doc for doc, score in docs_with_scores]
+        # Convert to similarity scores
+        docs_with_similarities = [
+            (doc, 1 - score) for doc, score in docs_with_scores 
+            if score <= 1.0
+        ]
         
-        # Note: Chroma returns distance (lower is better), convert to similarity
-        similarities = [1 - score for doc, score in docs_with_scores if score <= 1.0]
-        avg_similarity = sum(similarities) / len(similarities) if similarities else 0.0
+        # Extract key terms from question for relevance boosting
+        question_lower = question.lower()
+        key_terms = set()
+        
+        # Biology-specific key terms that should boost relevance
+        bio_terms = {
+            'cell', 'cells', 'nucleus', 'chloroplast', 'membrane', 'photosynthesis', 
+            'respiration', 'tissue', 'plant', 'animal', 'dna', 'mitochondria',
+            'cytoplasm', 'vacuole', 'organelle', 'protein', 'enzyme', 'glucose'
+        }
+        
+        for term in bio_terms:
+            if term in question_lower:
+                key_terms.add(term)
+        
+        # Boost scores for documents containing key terms (more conservative)
+        enhanced_docs = []
+        for doc, sim in docs_with_similarities:
+            content_lower = doc.page_content.lower()
+            
+            # Count key term matches
+            term_matches = sum(1 for term in key_terms if term in content_lower)
+            
+            # Conservative boost for documents with key term matches
+            if term_matches > 0:
+                boost = min(0.05 * term_matches, 0.1)  # Reduced: Max 10% boost
+                enhanced_sim = min(sim + boost, 1.0)
+            else:
+                enhanced_sim = sim
+            
+            enhanced_docs.append((doc, enhanced_sim, sim))  # Keep original sim for averaging
+        
+        # Sort by enhanced similarity with moderate precision threshold
+        enhanced_docs.sort(key=lambda x: x[1], reverse=True)
+        
+        # Apply moderate threshold for balanced precision and faithfulness
+        precision_threshold = max(self.similarity_threshold, 0.48)  # Slightly reduced from 0.5
+        
+        # Filter for good precision
+        precise_docs = [
+            (doc, enhanced_sim, orig_sim) for doc, enhanced_sim, orig_sim in enhanced_docs
+            if enhanced_sim >= precision_threshold
+        ]
+        
+        # Select final documents with better coverage for faithfulness
+        if len(precise_docs) >= 4:  # Need good coverage for faithfulness
+            final_docs = precise_docs[:k]
+        else:
+            # More generous fallback for faithfulness
+            moderate_threshold = max(self.similarity_threshold * 0.85, 0.4)
+            fallback_docs = [
+                (doc, enhanced_sim, orig_sim) for doc, enhanced_sim, orig_sim in enhanced_docs
+                if enhanced_sim >= moderate_threshold
+            ]
+            final_docs = fallback_docs[:k] if fallback_docs else enhanced_docs[:k]
+        
+        # Extract documents and calculate average from original similarities
+        documents = [doc for doc, _, _ in final_docs]
+        original_similarities = [orig_sim for _, _, orig_sim in final_docs]
+        avg_similarity = sum(original_similarities) / len(original_similarities) if original_similarities else 0.0
         
         return documents, avg_similarity
     

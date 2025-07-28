@@ -17,13 +17,13 @@ from langchain.schema import Document
 
 
 class KnowledgeBaseLoader:
-    def __init__(self, chunk_size: int = 800, chunk_overlap: int = 200):  # Optimized parameters
+    def __init__(self, chunk_size: int = 500, chunk_overlap: int = 100):  # Precision-optimized parameters
         """
-        Initialize Knowledge Base Loader with optimized chunking for better context coverage
+        Initialize Knowledge Base Loader with precision-optimized chunking
         
         Args:
-            chunk_size: Size of text chunks (increased to 800 for more context)
-            chunk_overlap: Overlap between chunks (increased to 200 for continuity)
+            chunk_size: Size of text chunks (reduced to 500 for maximum focus)
+            chunk_overlap: Overlap between chunks (reduced to 100 for precision)
         """
         # Get API key from environment or fail gracefully
         api_key = os.getenv("OPENAI_API_KEY")
@@ -35,12 +35,12 @@ class KnowledgeBaseLoader:
             openai_api_key=api_key
         )
         
-        # Initialize text splitter with optimized parameters
+        # Initialize text splitter for maximum precision
         self.text_splitter = RecursiveCharacterTextSplitter(
             chunk_size=chunk_size,
             chunk_overlap=chunk_overlap,
             length_function=len,
-            separators=["\n\n", "\n", ". ", " ", ""]  # Better separation hierarchy
+            separators=["\n\n", "\n", ". ", "! ", "? ", "; ", ", ", " ", ""]  # Fine-grained separation
         )
         
         self.vector_store = None

@@ -1,0 +1,35 @@
+============================================================
+RAG CHATBOT EVALUATION REPORT
+============================================================
+Generated on: 2025-07-29 01:47:38
+
+📊 RAGAS EVALUATION SCORES
+------------------------------
+Faithfulness        : 0.851 (Target: 0.8) ✅ PASS
+Answer Relevancy    : 0.959 (Target: 0.8) ✅ PASS
+Context Precision   : 0.765 (Target: 0.8) ❌ FAIL
+Context Recall      : 0.900 (Target: 0.8) ✅ PASS
+
+Average Score: 0.869 ✅ OVERALL PASS
+
+🌍 MULTILINGUAL SUPPORT EVALUATION
+----------------------------------------
+
+Question: What is a cell?
+  EN: ✅ (Score: 0.679)
+  ZH: ✅ (Score: 0.575)
+  MS: ❌ (Score: 0.454)
+
+Question: What is photosynthesis?
+  EN: ✅ (Score: 0.599)
+  ZH: ✅ (Score: 0.504)
+  MS: ✅ (Score: 0.503)
+
+💡 RECOMMENDATIONS
+--------------------
+• Improve context precision: Enhance retrieval to get more relevant context
+• Consider adjusting chunk size and overlap for better retrieval
+• Fine-tune similarity threshold for out-of-scope detection
+• Expand test cases to cover more diverse topics
+
+============================================================
