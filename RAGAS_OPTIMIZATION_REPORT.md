@@ -154,6 +154,5 @@ bio_terms = {'cell', 'nucleus', 'chloroplast', 'membrane', 'photosynthesis', ...
 
 ---
 
-_Report Generated: January 29, 2025_  
 _Evaluation Framework: RAGAS v0.1.x_  
 _Knowledge Domain: Cell Biology and Chemistry of Life_
